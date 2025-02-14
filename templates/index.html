@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Chat Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    <style>
+      /* Custom scrollbar */
+      #chatbox::-webkit-scrollbar {
+        width: 8px;
+      }
+      #chatbox::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      #chatbox::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+      #chatbox::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+
+      /* Background pattern */
+      .pattern {
+        background-image: radial-gradient(#3b82f680 2px, transparent 2px);
+        background-size: 32px 32px;
+      }
+
+      /* Aurora background effect */
+      .aurora-gradient {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        opacity: 0.5;
+        filter: blur(100px);
+      }
+
+      .aurora-gradient::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to bottom right,
+          rgba(13, 17, 23, 0.65) 30%,
+          rgba(88, 28, 135, 0.65),
+          rgba(37, 99, 235, 0.65)
+        );
+      }
+
+      .aurora-gradient::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 80% 20%,
+          rgba(37, 99, 235, 0.9),
+          rgba(88, 28, 135, 0.7) 25%,
+          rgba(13, 17, 23, 0.8) 50%
+        );
+        animation: aurora 60s linear infinite;
+      }
+
+      @keyframes aurora {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+    <script>
+      async function sendMessage() {
+        let userInput = document.getElementById("userInput");
+        let message = userInput.value;
+
+        if (!message) {
+          alert("Please enter a message!");
+          return;
+        }
+
+        // Add user message to chat
+        const chatbox = document.getElementById("chatbox");
+        chatbox.innerHTML += `
+          <div class="message user-message mb-4 flex justify-end">
+            <div class="bg-blue-600 text-white rounded-lg px-4 py-2 max-w-[80%]">
+              ${message}
+            </div>
+          </div>
+        `;
+
+        // Clear input
+        userInput.value = "";
+
+        try {
+          const response = await fetch("/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ message: message }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Server returned ${response.status}`);
+          }
+
+          const data = await response.json();
+          chatbox.innerHTML += `
+            <div class="message bot-message mb-4 flex justify-start">
+              <div class="bg-gray-200 text-gray-800 rounded-lg px-4 py-2 max-w-[80%]">
+                ${data.reply}
+              </div>
+            </div>
+          `;
+
+          // Auto-scroll to bottom
+          chatbox.scrollTop = chatbox.scrollHeight;
+        } catch (error) {
+          console.error("Error:", error);
+          chatbox.innerHTML += `
+            <div class="message mb-4 flex justify-center">
+              <div class="bg-red-100 text-red-600 rounded-lg px-4 py-2">
+                Error: Failed to get response
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // Allow Enter key to send message
+      document.addEventListener("DOMContentLoaded", () => {
+        const input = document.getElementById("userInput");
+        input.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            sendMessage();
+          }
+        });
+      });
+    </script>
+  </head>
+  <body class="bg-black">
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <svg
+              class="h-8 w-8 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 15h8a4 4 0 11-8 0z"
+              />
+            </svg>
+            <span class="ml-2 text-xl font-semibold text-gray-900"
+              >AI Assistant</span
+            >
+          </div>
+          <div class="flex items-center">
+            <a
+              href="https://github.com/yourusername"
+              class="text-gray-500 hover:text-gray-700"
+            >
+              <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  fill-rule="evenodd"
+                  d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section with Aurora Effect -->
+    <div class="relative min-h-screen overflow-hidden isolate">
+      <!-- Aurora Background -->
+      <div class="aurora-gradient"></div>
+
+      <!-- Content -->
+      <div class="relative z-10">
+        <div
+          class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-32 text-center"
+        >
+          <div class="space-y-4 mb-8">
+            <span
+              class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-blue-100/10 text-blue-200 ring-1 ring-inset ring-blue-400/20"
+            >
+              Powered by Advanced AI
+            </span>
+          </div>
+          <h1
+            class="text-4xl font-bold tracking-tight text-white sm:text-6xl md:text-7xl"
+          >
+            <span class="block">AI Chat Assistant</span>
+            <span class="block text-blue-400 mt-2"
+              >Powered by Intelligence</span
+            >
+          </h1>
+          <p class="mt-6 text-lg leading-8 text-gray-300 max-w-2xl mx-auto">
+            Experience the next generation of AI conversation. Get instant
+            answers, creative ideas, and helpful insights through natural
+            dialogue.
+          </p>
+          <div class="mt-10 flex items-center justify-center gap-x-6">
+            <a
+              href="#chat-section"
+              class="rounded-full bg-blue-500 px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 transition-all duration-300"
+            >
+              Start Chatting
+            </a>
+            <a
+              href="#features"
+              class="text-sm font-semibold leading-6 text-gray-300 hover:text-white transition-colors"
+            >
+              Learn more <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Decorative elements -->
+        <div
+          class="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
+        >
+          <div
+            class="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-blue-500 to-purple-500 opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Section -->
+    <div id="chat-section" class="max-w-4xl mx-auto px-4 py-16">
+      <div class="bg-white rounded-2xl shadow-xl ring-1 ring-gray-200">
+        <div class="p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-3">
+              <div
+                class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center"
+              >
+                <svg
+                  class="h-6 w-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">
+                  AI Assistant
+                </h2>
+                <p class="text-sm text-gray-500">Always here to help</p>
+              </div>
+            </div>
+            <span
+              class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800"
+            >
+              <svg
+                class="mr-1.5 h-2 w-2 fill-green-500"
+                fill="currentColor"
+                viewBox="0 0 8 8"
+              >
+                <circle cx="4" cy="4" r="3" />
+              </svg>
+              Online
+            </span>
+          </div>
+          <div
+            id="chatbox"
+            class="h-[500px] overflow-y-auto mb-6 space-y-4 border border-gray-100 rounded-xl p-4 bg-gray-50"
+          >
+            <!-- Initial welcome message -->
+            <div class="message bot-message flex justify-start">
+              <div
+                class="bg-white text-gray-800 rounded-2xl px-4 py-2 max-w-[80%] shadow-sm ring-1 ring-gray-200"
+              >
+                👋 Hello! I'm your AI assistant. How can I help you today?
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-4">
+            <input
+              type="text"
+              id="userInput"
+              placeholder="Type your message..."
+              class="flex-1 rounded-xl border-0 bg-gray-50 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+            />
+            <button
+              onclick="sendMessage()"
+              class="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            >
+              <svg
+                class="mr-2 h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
+              </svg>
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Smooth scroll script -->
+    <script>
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          document.querySelector(this.getAttribute("href")).scrollIntoView({
+            behavior: "smooth",
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
